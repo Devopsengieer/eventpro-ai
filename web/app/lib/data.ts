@@ -41,9 +41,9 @@ export interface WhyChooseItem {
 
 export const NAV_LINKS = [
   { label: "Discover", href: "/events" },
-  { label: "Categories", href: "/events#categories" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "About", href: "#about" },
+  { label: "Categories", href: "/categories" },
+  { label: "Pricing", href: "/pricing" },
+  { label: "About", href: "/about" },
 ];
 
 export const CATEGORIES: Category[] = [

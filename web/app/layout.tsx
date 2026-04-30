@@ -3,7 +3,7 @@ import "./globals.css";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 import { AuthProvider } from "@/app/lib/AuthContext";
-import { BookingProvider } from "@/app/lib/BookingContext";
+// import { BookingProvider } from "@/app/lib/BookingContext";
 
 export const metadata: Metadata = {
   title: {
@@ -36,11 +36,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const { getCurrentUser } = await import("@/app/actions/auth");
+  const user = await getCurrentUser();
+
   return (
     <html lang="en" className="h-full antialiased">
       <head>
@@ -59,13 +62,9 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col">
-        <AuthProvider>
-          <BookingProvider>
-            <Navbar />
-            <div style={{ flex: 1 }}>{children}</div>
-            <Footer />
-          </BookingProvider>
-        </AuthProvider>
+        <Navbar user={user} />
+        <div style={{ flex: 1 }}>{children}</div>
+        <Footer />
       </body>
     </html>
   );

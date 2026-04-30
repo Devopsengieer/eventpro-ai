@@ -3,25 +3,34 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useAuth } from "@/app/lib/AuthContext";
-import { useBookings, type Booking } from "@/app/lib/BookingContext";
+import { getCurrentUser } from "@/app/actions/auth";
+import { getMyBookings, cancelBooking } from "@/app/actions/booking";
 
 function MyBookingsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
-  const { bookings, cancelBooking, getBookingsByStatus } = useBookings();
-
+  
+  const [user, setUser] = useState<any>(null);
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [authLoading, setAuthLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"all" | "confirmed" | "cancelled" | "past">("all");
   const [showCancelModal, setShowCancelModal] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      router.push("/login?redirect=/my-bookings");
-    }
-  }, [authLoading, isAuthenticated, router]);
+    Promise.all([
+      getCurrentUser(),
+      getMyBookings()
+    ]).then(([userData, bookingsData]) => {
+      setUser(userData);
+      setBookings(bookingsData);
+      setAuthLoading(false);
+      
+      if (!userData) {
+        router.push("/login?redirect=/my-bookings");
+      }
+    });
+  }, [router]);
 
-  // Remove the 'new' search param if it exists (used for showing success toast/confetti in future)
   useEffect(() => {
     if (searchParams.get("new")) {
       const url = new URL(window.location.href);
@@ -30,7 +39,15 @@ function MyBookingsContent() {
     }
   }, [searchParams]);
 
-  if (authLoading || !isAuthenticated) return null;
+  if (authLoading || !user) return null;
+
+  const getBookingsByStatus = (status: "all" | "confirmed" | "cancelled" | "past") => {
+    if (status === "all") return bookings;
+    if (status === "confirmed") return bookings.filter(b => b.status === "CONFIRMED");
+    if (status === "cancelled") return bookings.filter(b => b.status === "CANCELLED");
+    if (status === "past") return bookings.filter(b => b.status === "PAST");
+    return bookings;
+  };
 
   const displayedBookings = getBookingsByStatus(activeTab);
   
@@ -38,8 +55,11 @@ function MyBookingsContent() {
   const pastCount = getBookingsByStatus("past").length;
   const cancelledCount = getBookingsByStatus("cancelled").length;
 
-  const handleCancel = (id: string) => {
-    cancelBooking(id);
+  const handleCancel = async (id: string) => {
+    const res = await cancelBooking(id);
+    if (res?.success) {
+      setBookings(bookings.map(b => b.id === id ? { ...b, status: "CANCELLED" } : b));
+    }
     setShowCancelModal(null);
   };
 
@@ -109,34 +129,34 @@ function MyBookingsContent() {
         ) : (
           displayedBookings.map((b) => (
             <div key={b.id} className="my-booking-card">
-              <img src={b.eventImage} alt={b.eventTitle} className="my-booking-img" />
+              <img src={b.event.image} alt={b.event.title} className="my-booking-img" />
               
               <div className="my-booking-info">
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-                  <span className={`status-badge ${b.status}`}>
-                    {b.status === "confirmed" ? "✓ Confirmed" : b.status === "past" ? "Completed" : "Cancelled"}
+                  <span className={`status-badge ${b.status.toLowerCase()}`}>
+                    {b.status === "CONFIRMED" ? "✓ Confirmed" : b.status === "PAST" ? "Completed" : "Cancelled"}
                   </span>
                   <span style={{ fontSize: "0.7rem", color: "var(--text-ghost)" }}>ID: {b.id}</span>
                 </div>
                 
-                <h3 className="my-booking-title">{b.eventTitle}</h3>
+                <h3 className="my-booking-title">{b.event.title}</h3>
                 
                 <div className="my-booking-meta">
-                  <span>📅 {b.eventDate} · {b.eventTime}</span>
-                  <span>📍 {b.eventLocation}</span>
+                  <span>📅 {b.event.date} · {b.event.time}</span>
+                  <span>📍 {b.event.location}</span>
                 </div>
                 
                 <div className="my-booking-details">
-                  <span className="my-booking-tickets">🎫 {b.tickets} Ticket{b.tickets > 1 ? 's' : ''}</span>
-                  <span className="my-booking-price">${b.totalPrice.toFixed(2)}</span>
+                  <span className="my-booking-tickets">🎫 {b.ticketCount} Ticket{b.ticketCount > 1 ? 's' : ''}</span>
+                  <span className="my-booking-price">${b.totalAmount.toFixed(2)}</span>
                 </div>
               </div>
 
               <div className="my-booking-actions">
-                <Link href={`/events/${b.eventId}`} className="btn-primary" style={{ background: b.status !== "confirmed" ? "rgba(255,255,255,0.1)" : undefined }}>
-                  {b.status === "confirmed" ? "View Ticket" : "View Event"}
+                <Link href={`/events/${b.eventId}`} className="btn-primary" style={{ background: b.status !== "CONFIRMED" ? "rgba(255,255,255,0.1)" : undefined }}>
+                  {b.status === "CONFIRMED" ? "View Ticket" : "View Event"}
                 </Link>
-                {b.status === "confirmed" && (
+                {b.status === "CONFIRMED" && (
                   <button className="btn-outline" style={{ color: "#f43f5e", borderColor: "rgba(244,63,94,0.3)" }} onClick={() => setShowCancelModal(b.id)}>
                     Cancel
                   </button>

@@ -1,11 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
-  getEventById,
-  getRelatedEvents,
   formatAttendees,
 } from "@/app/lib/data";
 import EventCard from "@/app/components/EventCard";
@@ -13,9 +11,23 @@ import EventCard from "@/app/components/EventCard";
 export default function EventDetailPage() {
   const params = useParams();
   const eventId = Number(params.id);
-  const event = getEventById(eventId);
+  const [event, setEvent] = useState<any>(null);
+  const [related, setRelated] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [ticketCount, setTicketCount] = useState(1);
   const [savedIds, setSavedIds] = useState<Set<number>>(new Set());
+
+  useEffect(() => {
+    import("@/app/actions/event").then(async (m) => {
+      const data = await m.getEventById(eventId);
+      setEvent(data);
+      if (data) {
+        const relData = await m.getRelatedEvents(data.category, eventId);
+        setRelated(relData);
+      }
+      setLoading(false);
+    });
+  }, [eventId]);
 
   const toggleSave = (id: number) => {
     setSavedIds((prev) => {
@@ -24,6 +36,10 @@ export default function EventDetailPage() {
       return next;
     });
   };
+
+  if (loading) {
+    return <div style={{ padding: 100, textAlign: "center" }}>Loading event details...</div>;
+  }
 
   if (!event) {
     return (
@@ -67,7 +83,6 @@ export default function EventDetailPage() {
     );
   }
 
-  const relatedEvents = getRelatedEvents(event);
   const isSaved = savedIds.has(event.id);
   const totalPrice = event.price * ticketCount;
 
@@ -320,7 +335,7 @@ export default function EventDetailPage() {
                   gap: 12,
                 }}
               >
-                {event.highlights.map((h) => (
+                {Array.isArray(event.highlights) && event.highlights.map((h: any) => (
                   <div
                     key={h}
                     style={{
@@ -370,7 +385,7 @@ export default function EventDetailPage() {
                 Event Schedule
               </h2>
               <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-                {event.schedule.map((item, i) => (
+                {Array.isArray(event.schedule) && event.schedule.map((item: any, i: number) => (
                   <div
                     key={i}
                     style={{
@@ -763,7 +778,7 @@ export default function EventDetailPage() {
         </div>
 
         {/* ── RELATED EVENTS ── */}
-        {relatedEvents.length > 0 && (
+        {related.length > 0 && (
           <div style={{ marginTop: 80 }}>
             <div
               style={{
@@ -807,7 +822,7 @@ export default function EventDetailPage() {
                 gap: 24,
               }}
             >
-              {relatedEvents.map((e, i) => (
+              {related.map((e, i) => (
                 <EventCard
                   key={e.id}
                   event={e}

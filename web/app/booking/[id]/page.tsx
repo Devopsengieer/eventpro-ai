@@ -3,19 +3,19 @@
 import { useState, useEffect, FormEvent, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { getEventById, formatAttendees } from "@/app/lib/data";
-import { useAuth } from "@/app/lib/AuthContext";
-import { useBookings } from "@/app/lib/BookingContext";
+import { getEventById } from "@/app/actions/event";
+import { getCurrentUser } from "@/app/actions/auth";
+import { createBooking } from "@/app/actions/booking";
 
 function BookingContent() {
   const params = useParams();
   const eventId = Number(params.id);
-  const event = getEventById(eventId);
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
-  const { addBooking } = useBookings();
+  const [event, setEvent] = useState<any>(null);
+  const [user, setUser] = useState<any>(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   const [step, setStep] = useState(1);
   const [ticketCount, setTicketCount] = useState(
@@ -34,17 +34,24 @@ function BookingContent() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      router.push(`/login?redirect=/booking/${eventId}`);
-    }
-  }, [authLoading, isAuthenticated, eventId, router]);
+    Promise.all([
+      getCurrentUser(),
+      getEventById(eventId)
+    ]).then(([userData, eventData]) => {
+      setUser(userData);
+      setEvent(eventData);
+      setAuthLoading(false);
+      
+      if (!userData) {
+        router.push(`/login?redirect=/booking/${eventId}`);
+      } else {
+        if (!attendeeName) setAttendeeName(userData.name);
+        if (!attendeeEmail) setAttendeeEmail(userData.email);
+      }
+    });
+  }, [eventId, router]);
 
-  useEffect(() => {
-    if (user && !attendeeName) setAttendeeName(user.name);
-    if (user && !attendeeEmail) setAttendeeEmail(user.email);
-  }, [user, attendeeName, attendeeEmail]);
-
-  if (authLoading || !isAuthenticated) return null;
+  if (authLoading || !user) return null;
 
   if (!event) {
     return (
@@ -95,23 +102,14 @@ function BookingContent() {
     // Simulate payment processing
     await new Promise((r) => setTimeout(r, 1500));
     
-    addBooking({
-      eventId: event.id,
-      eventTitle: event.title,
-      eventImage: event.image,
-      eventDate: event.date,
-      eventTime: event.time,
-      eventLocation: event.location,
-      eventCategory: event.category,
-      tickets: ticketCount,
-      totalPrice: grandTotal,
-      attendeeName,
-      attendeeEmail,
-      attendeePhone,
-    });
+    const res = await createBooking(event.id, ticketCount, grandTotal);
     
     setLoading(false);
-    router.push(`/my-bookings?new=true`);
+    if (res.error) {
+      setErrors({ card: res.error });
+    } else {
+      router.push(`/my-bookings?new=true`);
+    }
   };
 
   return (

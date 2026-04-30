@@ -3,28 +3,20 @@
 import { useState, type FormEvent, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useAuth } from "@/app/lib/AuthContext";
+import { login } from "@/app/actions/auth";
 
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, isAuthenticated } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
+  const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>(
     {}
   );
-
-  // Redirect if already logged in
-  if (isAuthenticated) {
-    const redirect = searchParams.get("redirect") || "/events";
-    router.push(redirect);
-    return null;
-  }
 
   const validate = () => {
     const e: typeof errors = {};
@@ -43,11 +35,20 @@ function LoginContent() {
     if (!validate()) return;
     setLoading(true);
     try {
-      await login(email, password);
-      const redirect = searchParams.get("redirect") || "/events";
-      router.push(redirect);
+      const formData = new FormData();
+      formData.append("email", email);
+      formData.append("password", password);
+      
+      const res = await login(formData);
+      if (res?.error) {
+        setErrors({ general: res.error });
+      } else {
+        const redirect = searchParams.get("redirect") || "/events";
+        router.push(redirect);
+        router.refresh();
+      }
     } catch {
-      setErrors({ email: "Login failed. Please try again." });
+      setErrors({ general: "Login failed. Please try again." });
     } finally {
       setLoading(false);
     }
@@ -112,6 +113,11 @@ function LoginContent() {
           </div>
 
           <form className="auth-form" onSubmit={handleSubmit} noValidate>
+            {errors.general && (
+              <div style={{ padding: "12px", background: "rgba(244,63,94,0.1)", border: "1px solid rgba(244,63,94,0.3)", borderRadius: "12px", color: "#f43f5e", marginBottom: "20px", fontSize: "0.9rem" }}>
+                {errors.general}
+              </div>
+            )}
             {/* Email */}
             <div className="auth-field">
               <label className="auth-label" htmlFor="login-email">

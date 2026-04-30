@@ -4,14 +4,25 @@ import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { NAV_LINKS } from "@/app/lib/data";
-import { useAuth } from "@/app/lib/AuthContext";
+import { logout } from "@/app/actions/auth";
+import { useRouter } from "next/navigation";
 
-export default function Navbar() {
+export default function Navbar({ user }: { user: any }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { user, isAuthenticated, logout } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
+
+  const isAuthenticated = !!user;
+  const userInitials = user ? user.name?.substring(0, 2).toUpperCase() : "";
+
+  const handleLogout = async () => {
+    await logout();
+    setDropdownOpen(false);
+    setMenuOpen(false);
+    router.refresh(); // Refresh to update layout without user
+  };
 
   const isAuthPage =
     pathname === "/login" ||
@@ -61,7 +72,7 @@ export default function Navbar() {
         {!isAuthenticated ? (
           <>
             <Link href="/login" className="nav-link ep-nav-signin">
-              Sign In
+              Login
             </Link>
             <Link href="/signup" className="btn-primary ep-nav-cta">
               Get Started
@@ -74,22 +85,27 @@ export default function Navbar() {
               onClick={() => setDropdownOpen(!dropdownOpen)}
               aria-label="User menu"
             >
-              {user?.initials}
+              {userInitials}
             </button>
             
             {dropdownOpen && (
               <div className="user-dropdown">
                 <div className="user-dropdown-header">
-                  <div className="user-dropdown-name">{user?.name}</div>
-                  <div className="user-dropdown-email">{user?.email}</div>
+                  <div className="user-dropdown-name">{user.name}</div>
+                  <div className="user-dropdown-email">{user.email}</div>
                 </div>
                 <Link href="/my-bookings" className="user-dropdown-item">
                   <span>🎟️</span> My Bookings
                 </Link>
+                {user.role === "ADMIN" && (
+                  <Link href="/admin" className="user-dropdown-item">
+                    <span>⚙️</span> Admin Dashboard
+                  </Link>
+                )}
                 <div className="user-dropdown-divider" />
                 <button 
                   className="user-dropdown-item danger"
-                  onClick={() => { logout(); setDropdownOpen(false); }}
+                  onClick={handleLogout}
                 >
                   <span>👋</span> Sign Out
                 </button>
@@ -141,18 +157,21 @@ export default function Navbar() {
           
           {!isAuthenticated ? (
             <>
-              <Link href="/login" className="nav-link ep-mobile-link">Sign In</Link>
+              <Link href="/login" className="nav-link ep-mobile-link">Login</Link>
               <Link href="/signup" className="btn-primary ep-mobile-cta">Get Started</Link>
             </>
           ) : (
             <>
               <div style={{ padding: "8px 0" }}>
-                <div style={{ fontSize: "0.9rem", color: "var(--text-primary)", fontWeight: 600 }}>{user?.name}</div>
-                <div style={{ fontSize: "0.8rem", color: "var(--text-faint)" }}>{user?.email}</div>
+                <div style={{ fontSize: "0.9rem", color: "var(--text-primary)", fontWeight: 600 }}>{user.name}</div>
+                <div style={{ fontSize: "0.8rem", color: "var(--text-faint)" }}>{user.email}</div>
               </div>
               <Link href="/my-bookings" className="nav-link ep-mobile-link">My Bookings</Link>
+              {user.role === "ADMIN" && (
+                <Link href="/admin" className="nav-link ep-mobile-link">Admin Dashboard</Link>
+              )}
               <button 
-                onClick={() => logout()}
+                onClick={handleLogout}
                 className="nav-link ep-mobile-link" 
                 style={{ textAlign: "left", background: "none", border: "none", color: "#f43f5e" }}
               >

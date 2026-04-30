@@ -3,7 +3,7 @@
 import { useState, useMemo, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useAuth } from "@/app/lib/AuthContext";
+import { signup } from "@/app/actions/auth";
 
 function getPasswordStrength(pw: string): {
   level: number;
@@ -25,7 +25,6 @@ function getPasswordStrength(pw: string): {
 
 export default function SignupPage() {
   const router = useRouter();
-  const { signup, isAuthenticated } = useAuth();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -37,11 +36,6 @@ export default function SignupPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const strength = useMemo(() => getPasswordStrength(password), [password]);
-
-  if (isAuthenticated) {
-    router.push("/events");
-    return null;
-  }
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -64,10 +58,20 @@ export default function SignupPage() {
     if (!validate()) return;
     setLoading(true);
     try {
-      await signup(name, email, password);
-      router.push("/events");
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("email", email);
+      formData.append("password", password);
+
+      const res = await signup(formData);
+      if (res?.error) {
+        setErrors({ general: res.error });
+      } else {
+        router.push("/events");
+        router.refresh();
+      }
     } catch {
-      setErrors({ email: "Signup failed. Please try again." });
+      setErrors({ general: "Signup failed. Please try again." });
     } finally {
       setLoading(false);
     }
@@ -132,6 +136,11 @@ export default function SignupPage() {
           </div>
 
           <form className="auth-form" onSubmit={handleSubmit} noValidate>
+            {errors.general && (
+              <div style={{ padding: "12px", background: "rgba(244,63,94,0.1)", border: "1px solid rgba(244,63,94,0.3)", borderRadius: "12px", color: "#f43f5e", marginBottom: "20px", fontSize: "0.9rem" }}>
+                {errors.general}
+              </div>
+            )}
             {/* Full Name */}
             <div className="auth-field">
               <label className="auth-label" htmlFor="signup-name">

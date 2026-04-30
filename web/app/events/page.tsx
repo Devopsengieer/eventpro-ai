@@ -15,6 +15,9 @@ function EventsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [query, setQuery] = useState(searchParams.get("q") || "");
   const [activeCategory, setActiveCategory] = useState(
     searchParams.get("category") || "All"
@@ -24,6 +27,15 @@ function EventsContent() {
   const [savedIds, setSavedIds] = useState<Set<number>>(new Set());
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  useEffect(() => {
+    import("@/app/actions/event").then((m) => {
+      m.getAllEvents().then((data) => {
+        setEvents(data);
+        setLoading(false);
+      });
+    });
+  }, []);
 
   // Sync URL params on initial load
   useEffect(() => {
@@ -61,7 +73,7 @@ function EventsContent() {
   };
 
   const filtered = useMemo(() => {
-    let list = EVENTS.filter((e) => {
+    let list = events.filter((e) => {
       const matchQuery =
         !query ||
         e.title.toLowerCase().includes(query.toLowerCase()) ||
@@ -139,8 +151,12 @@ function EventsContent() {
           </span>
         </div>
 
-        {/* SEARCH + CONTROLS */}
-        <div
+        {loading ? (
+          <div style={{ padding: "100px 0", textAlign: "center", color: "var(--text-muted)" }}>Loading events from database...</div>
+        ) : (
+          <>
+            {/* SEARCH + CONTROLS */}
+            <div
           style={{
             display: "flex",
             gap: 10,
@@ -500,6 +516,8 @@ function EventsContent() {
               />
             ))}
           </div>
+        )}
+          </>
         )}
       </div>
     </main>
