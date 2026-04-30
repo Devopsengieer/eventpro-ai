@@ -35,3 +35,16 @@ export async function getRelatedEvents(categoryId: string, excludeId: number) {
     return [];
   }
 }
+
+export async function getFeaturedEventsFromDB() {
+  try {
+    const events = await prisma.event.findMany({
+      where: { featured: true },
+      take: 6,
+    });
+    return events.map((e) => ({ ...e, createdAt: e.createdAt.toISOString(), updatedAt: e.updatedAt.toISOString() }));
+  } catch (error) {
+    console.error("Failed to fetch featured events:", error);
+    return [];
+  }
+}

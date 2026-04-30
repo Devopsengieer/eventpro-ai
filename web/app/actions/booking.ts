@@ -53,6 +53,7 @@ export async function getMyBookings() {
     });
     return bookings.map(b => ({
       ...b,
+      cancelledAt: b.cancelledAt?.toISOString() || null,
       createdAt: b.createdAt.toISOString(),
       updatedAt: b.updatedAt.toISOString(),
       event: {
@@ -79,7 +80,7 @@ export async function cancelBooking(bookingId: string) {
 
     await prisma.booking.update({
       where: { id: bookingId },
-      data: { status: "CANCELLED" }
+      data: { status: "CANCELLED", cancelledAt: new Date() }
     });
 
     await prisma.event.update({

@@ -1,13 +1,19 @@
-import { getAdminUsers } from "@/app/actions/admin";
+import { getAdminUsers, updateUserRole, deleteUser } from "@/app/actions/admin";
+import Link from "next/link";
 
 export default async function AdminUsersPage() {
   const users = await getAdminUsers();
 
   return (
     <div className="admin-users">
-      <div style={{ marginBottom: 40 }}>
-        <h1 className="section-title" style={{ marginBottom: 8 }}>User Directory</h1>
-        <p style={{ color: "var(--text-muted)" }}>View and manage registered users and their permissions.</p>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 40 }}>
+        <div>
+          <h1 className="section-title" style={{ marginBottom: 8 }}>User Directory</h1>
+          <p style={{ color: "var(--text-muted)" }}>Create, manage roles, and remove user accounts.</p>
+        </div>
+        <Link href="/admin/users/new" className="btn-primary" style={{ textDecoration: "none" }}>
+          + Create User
+        </Link>
       </div>
 
       <div style={{ 
@@ -23,6 +29,7 @@ export default async function AdminUsersPage() {
               <th style={{ padding: "20px 24px", color: "var(--text-faint)", fontSize: "0.85rem", fontWeight: 600, textTransform: "uppercase" }}>Role</th>
               <th style={{ padding: "20px 24px", color: "var(--text-faint)", fontSize: "0.85rem", fontWeight: 600, textTransform: "uppercase" }}>Bookings</th>
               <th style={{ padding: "20px 24px", color: "var(--text-faint)", fontSize: "0.85rem", fontWeight: 600, textTransform: "uppercase" }}>Joined</th>
+              <th style={{ padding: "20px 24px", color: "var(--text-faint)", fontSize: "0.85rem", fontWeight: 600, textTransform: "uppercase" }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -31,16 +38,10 @@ export default async function AdminUsersPage() {
                 <td style={{ padding: "20px 24px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <div style={{ 
-                      width: 36, 
-                      height: 36, 
-                      borderRadius: 10, 
-                      background: "rgba(99,102,241,0.1)", 
-                      color: "var(--accent-lighter)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontWeight: 700,
-                      fontSize: "0.8rem"
+                      width: 36, height: 36, borderRadius: 10, 
+                      background: "rgba(99,102,241,0.1)", color: "var(--accent-lighter)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontWeight: 700, fontSize: "0.8rem"
                     }}>
                       {u.name?.substring(0, 2).toUpperCase()}
                     </div>
@@ -51,23 +52,49 @@ export default async function AdminUsersPage() {
                   </div>
                 </td>
                 <td style={{ padding: "20px 24px" }}>
-                  <span style={{ 
-                    padding: "4px 10px", 
-                    borderRadius: 6, 
-                    fontSize: "0.7rem", 
-                    fontWeight: 700, 
-                    background: u.role === "ADMIN" ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.05)",
-                    color: u.role === "ADMIN" ? "#fbbf24" : "var(--text-secondary)",
-                    border: u.role === "ADMIN" ? "1px solid rgba(245,158,11,0.2)" : "1px solid rgba(255,255,255,0.1)"
-                  }}>
-                    {u.role}
-                  </span>
+                  <form action={async (formData: FormData) => {
+                    "use server";
+                    const newRole = formData.get("role") as string;
+                    await updateUserRole(u.id, newRole);
+                  }} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <select 
+                      name="role" 
+                      defaultValue={u.role}
+                      style={{ 
+                        padding: "6px 12px", borderRadius: 8, fontSize: "0.78rem", fontWeight: 600,
+                        background: u.role === "ADMIN" ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.05)",
+                        color: u.role === "ADMIN" ? "#fbbf24" : "var(--text-secondary)",
+                        border: u.role === "ADMIN" ? "1px solid rgba(245,158,11,0.2)" : "1px solid rgba(255,255,255,0.1)",
+                        cursor: "pointer", fontFamily: "inherit"
+                      }}
+                    >
+                      <option value="USER">USER</option>
+                      <option value="ADMIN">ADMIN</option>
+                    </select>
+                    <button type="submit" style={{
+                      background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)",
+                      color: "var(--accent-lighter)", cursor: "pointer", fontSize: "0.72rem",
+                      padding: "4px 10px", borderRadius: 6, fontFamily: "inherit", fontWeight: 600
+                    }}>
+                      Save
+                    </button>
+                  </form>
                 </td>
                 <td style={{ padding: "20px 24px", color: "var(--text-secondary)", fontSize: "0.9rem" }}>
                   {u._count.bookings} orders
                 </td>
                 <td style={{ padding: "20px 24px", color: "var(--text-faint)", fontSize: "0.85rem" }}>
                   {new Date(u.createdAt).toLocaleDateString()}
+                </td>
+                <td style={{ padding: "20px 24px" }}>
+                  <form action={async () => {
+                    "use server";
+                    await deleteUser(u.id);
+                  }}>
+                    <button type="submit" style={{ background: "none", border: "none", color: "#f43f5e", cursor: "pointer", fontSize: "0.9rem", padding: 0 }}>
+                      Delete
+                    </button>
+                  </form>
                 </td>
               </tr>
             ))}

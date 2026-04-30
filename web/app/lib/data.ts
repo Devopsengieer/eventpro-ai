@@ -55,6 +55,11 @@ export const CATEGORIES: Category[] = [
   { name: "Food & Drink", icon: "🍷", count: 388, accent: "#f97316" },
   { name: "Health", icon: "🧠", count: 156, accent: "#06b6d4" },
   { name: "Education", icon: "📚", count: 447, accent: "#84cc16" },
+  { name: "Theatre", icon: "🎭", count: 0, accent: "#e11d48" },
+  { name: "Comedy", icon: "😂", count: 0, accent: "#facc15" },
+  { name: "Film & Cinema", icon: "🎬", count: 0, accent: "#fb923c" },
+  { name: "Fitness & Wellness", icon: "🧘", count: 0, accent: "#14b8a6" },
+  { name: "Gaming & Esports", icon: "🎮", count: 0, accent: "#8b5cf6" },
 ];
 
 export const CATEGORY_ICONS: Record<string, string> = {
@@ -67,6 +72,11 @@ export const CATEGORY_ICONS: Record<string, string> = {
   "Food & Drink": "🍷",
   Health: "🧠",
   Education: "📚",
+  Theatre: "🎭",
+  Comedy: "😂",
+  "Film & Cinema": "🎬",
+  "Fitness & Wellness": "🧘",
+  "Gaming & Esports": "🎮",
 };
 
 export const FILTER_CATEGORIES = [
@@ -79,6 +89,11 @@ export const FILTER_CATEGORIES = [
   "Food & Drink",
   "Health",
   "Education",
+  "Theatre",
+  "Comedy",
+  "Film & Cinema",
+  "Fitness & Wellness",
+  "Gaming & Esports",
 ];
 
 export const SORT_OPTIONS = [
@@ -576,6 +591,196 @@ export const EVENTS: Event[] = [
       "Free security toolkit",
     ],
   },
+  {
+    id: 13,
+    title: "The Phantom of the Opera",
+    category: "Theatre",
+    date: "Dec 12, 2026",
+    time: "7:30 PM",
+    location: "Majestic Theatre, NY",
+    price: 125,
+    attendees: 1600,
+    image: "https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=800&q=80",
+    tag: "Classic",
+    tagColor: "#e11d48",
+    featured: true,
+    description: "Experience the legendary Phantom of the Opera in its original home. A hauntingly beautiful score and breathtaking stagecraft tell the story of the masked figure who haunts the catacombs of the Paris Opera House.",
+    organizer: {
+      name: "Broadway Productions",
+      avatar: "https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?w=100&q=80",
+      bio: "Bringing the best of Broadway to the world stage for over 50 years."
+    },
+    schedule: [
+      { time: "7:00 PM", title: "Doors Open" },
+      { time: "7:30 PM", title: "Act I" },
+      { time: "8:45 PM", title: "Intermission" },
+      { time: "9:15 PM", title: "Act II" },
+      { time: "10:30 PM", title: "Curtain Call" }
+    ],
+    highlights: ["Original Broadway production", "Live orchestra", "Iconic chandelier drop", "Award-winning cast"]
+  },
+  {
+    id: 14,
+    title: "Laughter Lounge Night",
+    category: "Comedy",
+    date: "Nov 20, 2026",
+    time: "8:00 PM",
+    location: "The Chuckle Hub, Chicago",
+    price: 45,
+    attendees: 300,
+    image: "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=800&q=80",
+    tag: "Hilarious",
+    tagColor: "#facc15",
+    featured: false,
+    description: "A night of non-stop laughs featuring top local talent and a special surprise headliner from Netflix. Grab a drink and settle in for the funniest night of the month.",
+    organizer: {
+      name: "Laugh Factory",
+      avatar: "https://images.unsplash.com/photo-1531123897727-8f129e16fd3c?w=100&q=80",
+      bio: "Chicago's premier destination for stand-up comedy since 1985."
+    },
+    schedule: [
+      { time: "7:30 PM", title: "Doors Open & Happy Hour" },
+      { time: "8:00 PM", title: "Host Introduction", speaker: "Mike Miller" },
+      { time: "8:15 PM", title: "Opening Set", speaker: "Sarah Jenkins" },
+      { time: "8:45 PM", title: "Middle Act", speaker: "The Improv Duo" },
+      { time: "9:30 PM", title: "Headliner", speaker: "Surprise Guest" }
+    ],
+    highlights: ["Surprise headliner", "Drink specials", "Intimate venue", "No drink minimum"]
+  },
+  {
+    id: 15,
+    title: "Indie Film Premiere",
+    category: "Film & Cinema",
+    date: "Oct 5, 2026",
+    time: "6:30 PM",
+    location: "Ritzy Cinema, London",
+    price: 25,
+    attendees: 450,
+    image: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=800&q=80",
+    tag: "Exclusive",
+    tagColor: "#fb923c",
+    featured: false,
+    description: "Be the first to see the year's most anticipated independent drama. Followed by an exclusive Q&A with the director and lead cast members.",
+    organizer: {
+      name: "Cinema Society",
+      avatar: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=100&q=80",
+      bio: "A community of film lovers dedicated to independent cinema."
+    },
+    schedule: [
+      { time: "6:30 PM", title: "Red Carpet Arrivals" },
+      { time: "7:00 PM", title: "Film Screening" },
+      { time: "9:00 PM", title: "Director Q&A", speaker: "Elena Russo" },
+      { time: "9:45 PM", title: "After-party" }
+    ],
+    highlights: ["World premiere", "Director Q&A", "Limited edition poster", "Complimentary popcorn"]
+  },
+  {
+    id: 16,
+    title: "Zen Yoga Workshop",
+    category: "Fitness & Wellness",
+    date: "Sep 15, 2026",
+    time: "10:00 AM",
+    location: "The Green Space, Seattle",
+    price: 60,
+    attendees: 150,
+    image: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&q=80",
+    tag: "Relaxing",
+    tagColor: "#14b8a6",
+    featured: false,
+    description: "Deepen your practice with this intensive 4-hour workshop focused on alignment, breath, and meditation. Suitable for all levels.",
+    organizer: {
+      name: "Wellness Collective",
+      avatar: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=100&q=80",
+      bio: "Promoting holistic health through movement and mindfulness."
+    },
+    schedule: [
+      { time: "10:00 AM", title: "Opening Circle & Breathwork" },
+      { time: "10:30 AM", title: "Vinyasa Flow" },
+      { time: "12:00 PM", title: "Alignment Clinic" },
+      { time: "1:30 PM", title: "Guided Meditation & Savasana" }
+    ],
+    highlights: ["Expert instructors", "Healthy snacks provided", "Yoga mat rentals included", "Take-home guide"]
+  },
+  {
+    id: 17,
+    title: "Esports Masters 2026",
+    category: "Gaming & Esports",
+    date: "Aug 25, 2026",
+    time: "2:00 PM",
+    location: "Cyber Arena, Seoul",
+    price: 80,
+    attendees: 5000,
+    image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&q=80",
+    tag: "Live",
+    tagColor: "#8b5cf6",
+    featured: true,
+    description: "The world's top esports teams compete for glory and a massive prize pool in the most anticipated tournament of the year. Experience the energy of a live arena.",
+    organizer: {
+      name: "Global Gaming League",
+      avatar: "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=100&q=80",
+      bio: "The leader in professional esports tournaments worldwide."
+    },
+    schedule: [
+      { time: "2:00 PM", title: "Opening Ceremony" },
+      { time: "3:00 PM", title: "Quarter Finals" },
+      { time: "5:00 PM", title: "Semi Finals" },
+      { time: "8:00 PM", title: "Grand Finale" }
+    ],
+    highlights: ["$1M prize pool", "Top pro teams", "Exclusive merch booth", "Live fan zone"]
+  },
+  {
+    id: 18,
+    title: "Hamlet: A Modern Twist",
+    category: "Theatre",
+    date: "Nov 5, 2026",
+    time: "8:00 PM",
+    location: "Globe Theatre, London",
+    price: 95,
+    attendees: 1200,
+    image: "https://images.unsplash.com/photo-1503095396549-80705bc068d6?w=800&q=80",
+    tag: "Must-See",
+    tagColor: "#e11d48",
+    featured: false,
+    description: "Shakespeare's masterpiece reimagined for the 21st century. This bold production explores themes of power, family, and madness in a sleek, contemporary setting.",
+    organizer: {
+      name: "The Royal Shakespeare Company",
+      avatar: "https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=100&q=80",
+      bio: "Renowned for innovative productions of Shakespeare's works."
+    },
+    schedule: [
+      { time: "7:30 PM", title: "Doors Open" },
+      { time: "8:00 PM", title: "Act I" },
+      { time: "9:30 PM", title: "Intermission" },
+      { time: "10:00 PM", title: "Act II" }
+    ],
+    highlights: ["Contemporary reimagining", "Stellar lead performance", "Innovative stage design"]
+  },
+  {
+    id: 19,
+    title: "Stand Up Showcase",
+    category: "Comedy",
+    date: "Dec 5, 2026",
+    time: "9:00 PM",
+    location: "Gotham Comedy Club, NY",
+    price: 35,
+    attendees: 250,
+    image: "https://images.unsplash.com/photo-1527224857830-43a7acc85260?w=800&q=80",
+    tag: "Top Rated",
+    tagColor: "#facc15",
+    featured: false,
+    description: "Catch the rising stars of the comedy world in this high-energy showcase. Five comedians, one mic, and endless laughs.",
+    organizer: {
+      name: "Gotham Comedy",
+      avatar: "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=100&q=80",
+      bio: "The legendary home of New York's finest comedy."
+    },
+    schedule: [
+      { time: "8:30 PM", title: "Doors Open" },
+      { time: "9:00 PM", title: "Showcase Starts" },
+      { time: "10:30 PM", title: "Post-show Mixer" }
+    ],
+    highlights: ["Best of NY comedy", "Great food menu", "Celebrity drop-ins"]
+  }
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

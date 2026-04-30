@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   CATEGORIES,
   WHY_CHOOSE,
-  getFeaturedEvents,
 } from "@/app/lib/data";
 import EventCard from "@/app/components/EventCard";
 
@@ -17,8 +16,13 @@ export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState("All Categories");
   const [savedIds, setSavedIds] = useState<Set<number>>(new Set());
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [featuredEvents, setFeaturedEvents] = useState<any[]>([]);
 
-  const featuredEvents = getFeaturedEvents();
+  useEffect(() => {
+    import("@/app/actions/event").then((m) => {
+      m.getFeaturedEventsFromDB().then((data: any[]) => setFeaturedEvents(data));
+    });
+  }, []);
 
   const toggleSave = (id: number) => {
     setSavedIds((prev) => {
@@ -197,6 +201,11 @@ export default function HomePage() {
               "Food & Drink",
               "Health",
               "Education",
+              "Theatre",
+              "Comedy",
+              "Film & Cinema",
+              "Fitness & Wellness",
+              "Gaming & Esports",
             ].map((c) => (
               <option key={c}>{c}</option>
             ))}

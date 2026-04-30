@@ -150,3 +150,85 @@ export async function updateEvent(id: number, formData: FormData) {
     return { error: error.message || "Failed to update event" };
   }
 }
+
+// ── User CRUD ──────────────────────────────────────────────────────────
+
+export async function createUser(formData: FormData) {
+  try {
+    await verifyAdmin();
+
+    const email = formData.get("email") as string;
+    const name = formData.get("name") as string;
+    const password = formData.get("password") as string;
+    const role = formData.get("role") as string;
+
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) return { error: "A user with this email already exists" };
+
+    await prisma.user.create({
+      data: { email, name, passwordHash: password, role: role as any },
+    });
+
+    revalidatePath("/admin/users");
+    return { success: true };
+  } catch (error: any) {
+    console.error(error);
+    return { error: error.message || "Failed to create user" };
+  }
+}
+
+export async function updateUserRole(userId: string, role: string) {
+  try {
+    await verifyAdmin();
+    await prisma.user.update({
+      where: { id: userId },
+      data: { role: role as any },
+    });
+    revalidatePath("/admin/users");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message || "Failed to update user" };
+  }
+}
+
+export async function deleteUser(userId: string) {
+  try {
+    const admin = await verifyAdmin();
+    if (admin.id === userId) return { error: "Cannot delete yourself" };
+
+    // Delete user's bookings first
+    await prisma.booking.deleteMany({ where: { userId } });
+    await prisma.user.delete({ where: { id: userId } });
+
+    revalidatePath("/admin/users");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message || "Failed to delete user" };
+  }
+}
+
+// ── Admin Booking Management ───────────────────────────────────────────
+
+export async function adminCancelBooking(bookingId: string) {
+  try {
+    await verifyAdmin();
+    const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+    if (!booking) return { error: "Booking not found" };
+    if (booking.status === "CANCELLED") return { error: "Already cancelled" };
+
+    await prisma.booking.update({
+      where: { id: bookingId },
+      data: { status: "CANCELLED", cancelledAt: new Date() },
+    });
+
+    await prisma.event.update({
+      where: { id: booking.eventId },
+      data: { attendees: { decrement: booking.ticketCount } },
+    });
+
+    revalidatePath("/admin/bookings");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message || "Failed to cancel booking" };
+  }
+}

@@ -1,4 +1,4 @@
-import { getAdminBookings } from "@/app/actions/admin";
+import { getAdminBookings, adminCancelBooking } from "@/app/actions/admin";
 
 export default async function AdminBookingsPage() {
   const bookings = await getAdminBookings();
@@ -7,7 +7,7 @@ export default async function AdminBookingsPage() {
     <div className="admin-bookings">
       <div style={{ marginBottom: 40 }}>
         <h1 className="section-title" style={{ marginBottom: 8 }}>System Bookings</h1>
-        <p style={{ color: "var(--text-muted)" }}>View and monitor all event transactions and registrations.</p>
+        <p style={{ color: "var(--text-muted)" }}>View and manage all event transactions and registrations.</p>
       </div>
 
       <div style={{ 
@@ -24,7 +24,8 @@ export default async function AdminBookingsPage() {
               <th style={{ padding: "20px 24px", color: "var(--text-faint)", fontSize: "0.85rem", fontWeight: 600, textTransform: "uppercase" }}>Tickets</th>
               <th style={{ padding: "20px 24px", color: "var(--text-faint)", fontSize: "0.85rem", fontWeight: 600, textTransform: "uppercase" }}>Total</th>
               <th style={{ padding: "20px 24px", color: "var(--text-faint)", fontSize: "0.85rem", fontWeight: 600, textTransform: "uppercase" }}>Status</th>
-              <th style={{ padding: "20px 24px", color: "var(--text-faint)", fontSize: "0.85rem", fontWeight: 600, textTransform: "uppercase" }}>Date</th>
+              <th style={{ padding: "20px 24px", color: "var(--text-faint)", fontSize: "0.85rem", fontWeight: 600, textTransform: "uppercase" }}>Booked On</th>
+              <th style={{ padding: "20px 24px", color: "var(--text-faint)", fontSize: "0.85rem", fontWeight: 600, textTransform: "uppercase" }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -44,20 +45,42 @@ export default async function AdminBookingsPage() {
                   ${b.totalAmount.toFixed(2)}
                 </td>
                 <td style={{ padding: "20px 24px" }}>
-                  <span style={{ 
-                    padding: "4px 10px", 
-                    borderRadius: 6, 
-                    fontSize: "0.7rem", 
-                    fontWeight: 700, 
-                    background: b.status === "CONFIRMED" ? "rgba(16,185,129,0.15)" : "rgba(244,63,94,0.15)",
-                    color: b.status === "CONFIRMED" ? "#10b981" : "#f43f5e",
-                    border: b.status === "CONFIRMED" ? "1px solid rgba(16,185,129,0.2)" : "1px solid rgba(244,63,94,0.2)"
-                  }}>
-                    {b.status}
-                  </span>
+                  <div>
+                    <span style={{ 
+                      padding: "4px 10px", borderRadius: 6, fontSize: "0.7rem", fontWeight: 700, 
+                      background: b.status === "CONFIRMED" ? "rgba(16,185,129,0.15)" : "rgba(244,63,94,0.15)",
+                      color: b.status === "CONFIRMED" ? "#10b981" : "#f43f5e",
+                      border: b.status === "CONFIRMED" ? "1px solid rgba(16,185,129,0.2)" : "1px solid rgba(244,63,94,0.2)"
+                    }}>
+                      {b.status}
+                    </span>
+                    {b.cancelledAt && (
+                      <div style={{ fontSize: "0.72rem", color: "var(--text-faint)", marginTop: 6 }}>
+                        Cancelled: {new Date(b.cancelledAt).toLocaleString()}
+                      </div>
+                    )}
+                  </div>
                 </td>
                 <td style={{ padding: "20px 24px", color: "var(--text-faint)", fontSize: "0.85rem" }}>
                   {new Date(b.createdAt).toLocaleDateString()}
+                </td>
+                <td style={{ padding: "20px 24px" }}>
+                  {b.status === "CONFIRMED" ? (
+                    <form action={async () => {
+                      "use server";
+                      await adminCancelBooking(b.id);
+                    }}>
+                      <button type="submit" style={{ 
+                        background: "rgba(244,63,94,0.1)", border: "1px solid rgba(244,63,94,0.2)", 
+                        color: "#f43f5e", cursor: "pointer", fontSize: "0.78rem", padding: "6px 14px",
+                        borderRadius: 8, fontFamily: "inherit", fontWeight: 600
+                      }}>
+                        Cancel Order
+                      </button>
+                    </form>
+                  ) : (
+                    <span style={{ fontSize: "0.8rem", color: "var(--text-ghost)" }}>—</span>
+                  )}
                 </td>
               </tr>
             ))}

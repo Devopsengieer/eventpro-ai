@@ -1,7 +1,16 @@
 import Link from "next/link";
 import { CATEGORIES } from "@/app/lib/data";
+import { prisma } from "@/app/lib/db";
 
-export default function CategoriesPage() {
+export default async function CategoriesPage() {
+  // Fetch real counts from the database
+  const counts = await prisma.event.groupBy({
+    by: ["category"],
+    _count: { id: true },
+  });
+  const countMap: Record<string, number> = {};
+  counts.forEach((c) => { countMap[c.category] = c._count.id; });
+
   return (
     <main className="categories-page">
       <div className="categories-header">
@@ -23,7 +32,7 @@ export default function CategoriesPage() {
           >
             <div className="category-page-icon">{cat.icon}</div>
             <h3 className="category-page-title">{cat.name}</h3>
-            <span className="category-page-count">{cat.count} Active Events</span>
+            <span className="category-page-count">{countMap[cat.name] || 0} Active Events</span>
           </Link>
         ))}
       </div>

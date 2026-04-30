@@ -22,6 +22,9 @@ function EventsContent() {
   const [activeCategory, setActiveCategory] = useState(
     searchParams.get("category") || "All"
   );
+  const [activeLocation, setActiveLocation] = useState(
+    searchParams.get("location") || ""
+  );
   const [sortBy, setSortBy] = useState("Relevance");
   const [maxPrice, setMaxPrice] = useState(1000);
   const [savedIds, setSavedIds] = useState<Set<number>>(new Set());
@@ -41,8 +44,10 @@ function EventsContent() {
   useEffect(() => {
     const q = searchParams.get("q");
     const cat = searchParams.get("category");
+    const loc = searchParams.get("location");
     if (q) setQuery(q);
     if (cat && FILTER_CATEGORIES.includes(cat)) setActiveCategory(cat);
+    if (loc) setActiveLocation(loc);
   }, [searchParams]);
 
   // Update URL when filters change
@@ -82,7 +87,9 @@ function EventsContent() {
       const matchCat =
         activeCategory === "All" || e.category === activeCategory;
       const matchPrice = e.price <= maxPrice;
-      return matchQuery && matchCat && matchPrice;
+      const matchLocation =
+        !activeLocation || e.location.toLowerCase().includes(activeLocation.toLowerCase());
+      return matchQuery && matchCat && matchPrice && matchLocation;
     });
     if (sortBy === "Date: Soonest")
       list = [...list].sort((a, b) => a.date.localeCompare(b.date));
@@ -93,7 +100,7 @@ function EventsContent() {
     else if (sortBy === "Most Popular")
       list = [...list].sort((a, b) => b.attendees - a.attendees);
     return list;
-  }, [query, activeCategory, sortBy, maxPrice]);
+  }, [events, query, activeCategory, activeLocation, sortBy, maxPrice]);
 
   return (
     <main
@@ -416,23 +423,14 @@ function EventsContent() {
         )}
 
         {/* CATEGORY CHIPS */}
-        <div
-          style={{
-            display: "flex",
-            gap: 8,
-            overflowX: "auto",
-            paddingBottom: 4,
-            marginBottom: 32,
-            scrollbarWidth: "none",
-          }}
-        >
+        <div className="category-scroller">
           {FILTER_CATEGORIES.map((cat) => (
             <button
               key={cat}
               className={`cat-chip${activeCategory === cat ? " active" : ""}`}
               onClick={() => handleCategoryChange(cat)}
             >
-              <span>{CATEGORY_ICONS[cat]}</span>
+              <span style={{ fontSize: "1.1rem" }}>{CATEGORY_ICONS[cat]}</span>
               {cat}
             </button>
           ))}

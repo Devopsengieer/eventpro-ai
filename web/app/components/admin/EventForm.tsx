@@ -44,11 +44,18 @@ export default function EventForm({
           <label className="auth-label">Category</label>
           <select name="category" className="auth-input" defaultValue={initialData?.category || "Technology"} required>
             <option value="Technology">Technology</option>
-            <option value="Conference">Conference</option>
-            <option value="Workshop">Workshop</option>
-            <option value="Networking">Networking</option>
             <option value="Music">Music</option>
-            <option value="Art">Art</option>
+            <option value="Business">Business</option>
+            <option value="Sports">Sports</option>
+            <option value="Art & Design">Art & Design</option>
+            <option value="Food & Drink">Food & Drink</option>
+            <option value="Health">Health</option>
+            <option value="Education">Education</option>
+            <option value="Theatre">Theatre</option>
+            <option value="Comedy">Comedy</option>
+            <option value="Film & Cinema">Film & Cinema</option>
+            <option value="Fitness & Wellness">Fitness & Wellness</option>
+            <option value="Gaming & Esports">Gaming & Esports</option>
           </select>
         </div>
         <div className="auth-field">

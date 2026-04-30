@@ -41,17 +41,18 @@ model Event {
 }
 
 model Booking {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   userId      String
   eventId     Int
   ticketCount Int
-  status      String   @default("CONFIRMED") // CONFIRMED, CANCELLED
+  status      String    @default("CONFIRMED") // CONFIRMED, CANCELLED
   totalAmount Float
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  cancelledAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   
-  user        User     @relation(fields: [userId], references: [id])
-  event       Event    @relation(fields: [eventId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
+  event       Event     @relation(fields: [eventId], references: [id])
 }
 
 enum Role {

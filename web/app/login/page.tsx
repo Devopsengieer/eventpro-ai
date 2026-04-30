@@ -104,9 +104,21 @@ function LoginContent() {
 
       {/* ─── Form Panel (right) ─── */}
       <div className="auth-form-panel">
-        <div className="auth-form-container">
+        <div className="auth-form-container fade-in">
+          <Link href="/" className="auth-back-link" style={{ 
+            display: "inline-flex", 
+            alignItems: "center", 
+            gap: "8px", 
+            color: "var(--text-faint)", 
+            textDecoration: "none", 
+            fontSize: "0.85rem", 
+            marginBottom: "32px",
+            transition: "color 0.2s"
+          }}>
+            ← Back to Website
+          </Link>
           <div className="auth-form-header">
-            <h2 className="auth-form-title">Login</h2>
+            <h2 className="auth-form-title">Welcome Back</h2>
             <p className="auth-form-desc">
               Enter your credentials to access your account
             </p>
