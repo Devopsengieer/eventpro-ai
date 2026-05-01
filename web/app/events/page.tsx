@@ -5,11 +5,11 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
 import {
   EVENTS,
-  FILTER_CATEGORIES,
   SORT_OPTIONS,
-  CATEGORY_ICONS,
 } from "@/app/lib/data";
 import EventCard from "@/app/components/EventCard";
+import DynamicIcon from "@/app/components/DynamicIcon";
+import { getCategories } from "@/app/actions/admin";
 
 function EventsContent() {
   const searchParams = useSearchParams();
@@ -30,6 +30,9 @@ function EventsContent() {
   const [savedIds, setSavedIds] = useState<Set<number>>(new Set());
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [dbCategories, setDbCategories] = useState<any[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 9;
 
   useEffect(() => {
     import("@/app/actions/event").then((m) => {
@@ -38,7 +41,18 @@ function EventsContent() {
         setLoading(false);
       });
     });
+    import("@/app/actions/wishlist").then((m) => {
+      m.getWishlistItems().then((items) => {
+        setSavedIds(new Set(items.map((i: any) => i.eventId)));
+      });
+    });
+    getCategories().then(setDbCategories);
   }, []);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [query, activeCategory, maxPrice, sortBy]);
 
   // Sync URL params on initial load
   useEffect(() => {
@@ -46,7 +60,7 @@ function EventsContent() {
     const cat = searchParams.get("category");
     const loc = searchParams.get("location");
     if (q) setQuery(q);
-    if (cat && FILTER_CATEGORIES.includes(cat)) setActiveCategory(cat);
+    if (cat) setActiveCategory(cat);
     if (loc) setActiveLocation(loc);
   }, [searchParams]);
 
@@ -75,6 +89,9 @@ function EventsContent() {
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
+    import("@/app/actions/wishlist").then((m) => {
+      m.toggleWishlistItem(id);
+    });
   };
 
   const filtered = useMemo(() => {
@@ -101,6 +118,9 @@ function EventsContent() {
       list = [...list].sort((a, b) => b.attendees - a.attendees);
     return list;
   }, [events, query, activeCategory, activeLocation, sortBy, maxPrice]);
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const currentItems = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <main
@@ -424,14 +444,21 @@ function EventsContent() {
 
         {/* CATEGORY CHIPS */}
         <div className="category-scroller">
-          {FILTER_CATEGORIES.map((cat) => (
+          <button
+            className={`cat-chip${activeCategory === "All" ? " active" : ""}`}
+            onClick={() => handleCategoryChange("All")}
+          >
+            <span style={{ fontSize: "1.1rem" }}>◈</span>
+            All
+          </button>
+          {dbCategories.map((cat) => (
             <button
-              key={cat}
-              className={`cat-chip${activeCategory === cat ? " active" : ""}`}
-              onClick={() => handleCategoryChange(cat)}
+              key={cat.name}
+              className={`cat-chip${activeCategory === cat.name ? " active" : ""}`}
+              onClick={() => handleCategoryChange(cat.name)}
             >
-              <span style={{ fontSize: "1.1rem" }}>{CATEGORY_ICONS[cat]}</span>
-              {cat}
+              <DynamicIcon name={cat.icon} size={18} />
+              {cat.name}
             </button>
           ))}
         </div>
@@ -479,10 +506,10 @@ function EventsContent() {
               display: "grid",
               gridTemplateColumns: "repeat(auto-fill,minmax(300px,1fr))",
               gap: 24,
-              paddingBottom: 80,
+              paddingBottom: 40,
             }}
           >
-            {filtered.map((event, i) => (
+            {currentItems.map((event, i) => (
               <EventCard
                 key={event.id}
                 event={event}
@@ -500,10 +527,10 @@ function EventsContent() {
               display: "flex",
               flexDirection: "column",
               gap: 14,
-              paddingBottom: 80,
+              paddingBottom: 40,
             }}
           >
-            {filtered.map((event, i) => (
+            {currentItems.map((event, i) => (
               <EventCard
                 key={event.id}
                 event={event}
@@ -513,6 +540,53 @@ function EventsContent() {
                 onToggleSave={toggleSave}
               />
             ))}
+          </div>
+        )}
+
+        {/* CLIENT PAGINATION */}
+        {totalPages > 1 && (
+          <div style={{ 
+            display: "flex", 
+            justifyContent: "center", 
+            gap: 8, 
+            paddingBottom: 80,
+            marginTop: 20
+          }}>
+            <button 
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(prev => prev - 1)}
+              className="btn-outline"
+              style={{ padding: "8px 16px", borderRadius: 12, opacity: currentPage === 1 ? 0.5 : 1 }}
+            >
+              Prev
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+              <button
+                key={p}
+                onClick={() => setCurrentPage(p)}
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 12,
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  background: currentPage === p ? "var(--gradient-primary)" : "rgba(255,255,255,0.05)",
+                  color: "white",
+                  cursor: "pointer",
+                  fontWeight: currentPage === p ? 700 : 400,
+                  transition: "all 0.2s"
+                }}
+              >
+                {p}
+              </button>
+            ))}
+            <button 
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(prev => prev + 1)}
+              className="btn-outline"
+              style={{ padding: "8px 16px", borderRadius: 12, opacity: currentPage === totalPages ? 0.5 : 1 }}
+            >
+              Next
+            </button>
           </div>
         )}
           </>

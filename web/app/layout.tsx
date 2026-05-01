@@ -42,7 +42,14 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const { getCurrentUser } = await import("@/app/actions/auth");
+  const { getWishlistItems } = await import("@/app/actions/wishlist");
+  
   const user = await getCurrentUser();
+  let wishlistCount = 0;
+  if (user) {
+    const items = await getWishlistItems();
+    wishlistCount = items.length;
+  }
 
   return (
     <html lang="en" className="h-full antialiased">
@@ -62,7 +69,7 @@ export default async function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col">
-        <Navbar user={user} />
+        <Navbar user={user} wishlistCount={wishlistCount} />
         <div style={{ flex: 1 }}>{children}</div>
         <Footer />
       </body>

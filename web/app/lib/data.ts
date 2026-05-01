@@ -790,6 +790,38 @@ export function formatAttendees(n: number): string {
   return String(n);
 }
 
+export function formatDate(dateStr: string): string {
+  if (!dateStr) return "";
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr; // Return as-is if already formatted
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  } catch (e) {
+    return dateStr;
+  }
+}
+
+export function formatTime(timeStr: string): string {
+  if (!timeStr) return "";
+  try {
+    // If it's already in 10:00 AM format
+    if (timeStr.includes("AM") || timeStr.includes("PM")) return timeStr;
+    
+    // If it's in HH:mm format
+    const [hours, minutes] = timeStr.split(":");
+    const h = parseInt(hours);
+    const ampm = h >= 12 ? "PM" : "AM";
+    const h12 = h % 12 || 12;
+    return `${h12}:${minutes} ${ampm}`;
+  } catch (e) {
+    return timeStr;
+  }
+}
+
 export function getEventById(id: number): Event | undefined {
   return EVENTS.find((e) => e.id === id);
 }

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { getCategories } from "@/app/actions/admin";
 
 export default function EventForm({ 
   initialData, 
@@ -11,8 +12,49 @@ export default function EventForm({
   action: (formData: FormData) => Promise<{ success?: boolean, error?: string }> 
 }) {
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const [categories, setCategories] = useState<{name: string}[]>([]);
+  const [imagePreview, setImagePreview] = useState(initialData?.image || "");
   const router = useRouter();
+
+  useEffect(() => {
+    async function loadCategories() {
+      try {
+        const cats = await getCategories();
+        setCategories(cats);
+      } catch (err) {
+        console.error("Failed to load categories", err);
+      }
+    }
+    loadCategories();
+  }, []);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.url) {
+        setImagePreview(data.url);
+      } else {
+        setError(data.error || "Upload failed");
+      }
+    } catch (err) {
+      setError("Failed to upload image");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -20,6 +62,83 @@ export default function EventForm({
     setError("");
 
     const formData = new FormData(e.currentTarget);
+    
+    // Client-side validation
+    const title = formData.get("title") as string;
+    const category = formData.get("category") as string;
+    const date = formData.get("date") as string;
+    const time = formData.get("time") as string;
+    const location = formData.get("location") as string;
+    const price = formData.get("price") as string;
+    const description = formData.get("description") as string;
+
+    if (!title?.trim()) {
+      setError("Event title is required");
+      setLoading(false);
+      return;
+    }
+    if (!category?.trim()) {
+      setError("Category is required");
+      setLoading(false);
+      return;
+    }
+    if (!date?.trim()) {
+      setError("Date is required");
+      setLoading(false);
+      return;
+    }
+    if (!time?.trim()) {
+      setError("Time is required");
+      setLoading(false);
+      return;
+    }
+    if (!location?.trim()) {
+      setError("Location is required");
+      setLoading(false);
+      return;
+    }
+    if (!price?.trim() || isNaN(parseFloat(price)) || parseFloat(price) < 0) {
+      setError("Price must be a valid positive number");
+      setLoading(false);
+      return;
+    }
+    if (!description?.trim()) {
+      setError("Description is required");
+      setLoading(false);
+      return;
+    }
+    if (!imagePreview?.trim()) {
+      setError("Event image is required");
+      setLoading(false);
+      return;
+    }
+
+    // Validate JSON fields
+    try {
+      JSON.parse(formData.get("organizer") as string);
+    } catch {
+      setError("Invalid organizer JSON format. Please check the JSON syntax.");
+      setLoading(false);
+      return;
+    }
+    try {
+      JSON.parse(formData.get("schedule") as string);
+    } catch {
+      setError("Invalid schedule JSON format. Please check the JSON syntax.");
+      setLoading(false);
+      return;
+    }
+    try {
+      JSON.parse(formData.get("highlights") as string);
+    } catch {
+      setError("Invalid highlights JSON format. Please check the JSON syntax.");
+      setLoading(false);
+      return;
+    }
+
+    // Ensure the image URL from preview/upload is used
+    formData.set("image", imagePreview);
+    
     const result = await action(formData);
 
     if (result.success) {
@@ -28,6 +147,18 @@ export default function EventForm({
     } else {
       setError(result.error || "An error occurred");
       setLoading(false);
+    }
+  };
+
+  // Helper to format date for input
+  const formatDateForInput = (dateStr: string) => {
+    if (!dateStr) return "";
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return "";
+      return date.toISOString().split('T')[0];
+    } catch (e) {
+      return "";
     }
   };
 
@@ -42,29 +173,32 @@ export default function EventForm({
         </div>
         <div className="auth-field">
           <label className="auth-label">Category</label>
-          <select name="category" className="auth-input" defaultValue={initialData?.category || "Technology"} required>
-            <option value="Technology">Technology</option>
-            <option value="Music">Music</option>
-            <option value="Business">Business</option>
-            <option value="Sports">Sports</option>
-            <option value="Art & Design">Art & Design</option>
-            <option value="Food & Drink">Food & Drink</option>
-            <option value="Health">Health</option>
-            <option value="Education">Education</option>
-            <option value="Theatre">Theatre</option>
-            <option value="Comedy">Comedy</option>
-            <option value="Film & Cinema">Film & Cinema</option>
-            <option value="Fitness & Wellness">Fitness & Wellness</option>
-            <option value="Gaming & Esports">Gaming & Esports</option>
+          <select name="category" className="auth-input" defaultValue={initialData?.category || ""} required>
+            <option value="" disabled>Select Category</option>
+            {categories.map((cat) => (
+              <option key={cat.name} value={cat.name}>{cat.name}</option>
+            ))}
           </select>
         </div>
         <div className="auth-field">
           <label className="auth-label">Date</label>
-          <input name="date" className="auth-input" defaultValue={initialData?.date} required placeholder="e.g. Oct 24, 2024" />
+          <input 
+            name="date" 
+            type="date" 
+            className="auth-input" 
+            defaultValue={formatDateForInput(initialData?.date)} 
+            required 
+          />
         </div>
         <div className="auth-field">
           <label className="auth-label">Time</label>
-          <input name="time" className="auth-input" defaultValue={initialData?.time} required placeholder="e.g. 10:00 AM - 4:00 PM" />
+          <input 
+            name="time" 
+            type="time" 
+            className="auth-input" 
+            defaultValue={initialData?.time || ""} 
+            required 
+          />
         </div>
         <div className="auth-field">
           <label className="auth-label">Location</label>
@@ -74,10 +208,66 @@ export default function EventForm({
           <label className="auth-label">Price ($)</label>
           <input name="price" type="number" step="0.01" className="auth-input" defaultValue={initialData?.price} required placeholder="e.g. 299" />
         </div>
+        
         <div className="auth-field" style={{ gridColumn: "span 2" }}>
-          <label className="auth-label">Image URL</label>
-          <input name="image" className="auth-input" defaultValue={initialData?.image} required placeholder="https://images.unsplash.com/..." />
+          <label className="auth-label">Event Image</label>
+          <div style={{ display: "flex", gap: 20, alignItems: "flex-start", marginTop: 8 }}>
+            {imagePreview && (
+              <div style={{ position: "relative" }}>
+                <img src={imagePreview} alt="Preview" style={{ width: 140, height: 140, borderRadius: 16, objectFit: "cover", border: "1px solid rgba(255,255,255,0.1)" }} />
+                <button 
+                  type="button" 
+                  onClick={() => setImagePreview("")}
+                  style={{ 
+                    position: "absolute", top: -8, right: -8, width: 24, height: 24, borderRadius: "50%", 
+                    background: "#f43f5e", color: "white", border: "none", cursor: "pointer", fontSize: 12
+                  }}
+                >✕</button>
+              </div>
+            )}
+            <div style={{ flex: 1 }}>
+              <div style={{ 
+                position: "relative", border: "2px dashed rgba(255,255,255,0.1)", 
+                borderRadius: 16, padding: "30px 20px", textAlign: "center",
+                transition: "all 0.2s ease",
+                background: uploading ? "rgba(255,255,255,0.05)" : "transparent"
+              }}>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleImageUpload}
+                  style={{ 
+                    position: "absolute", inset: 0, opacity: 0, cursor: "pointer", zIndex: 2 
+                  }}
+                />
+                <div style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
+                  {uploading ? (
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                      <span className="auth-spinner" style={{ width: 20, height: 20 }} />
+                      Uploading...
+                    </div>
+                  ) : (
+                    <>
+                      <div style={{ fontSize: "1.5rem", marginBottom: 8 }}>📸</div>
+                      <div>Click or drag to upload image</div>
+                      <div style={{ fontSize: "0.75rem", marginTop: 4 }}>PNG, JPG, WEBP (max. 5MB)</div>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div style={{ marginTop: 12 }}>
+                <label style={{ fontSize: "0.7rem", color: "var(--text-ghost)", display: "block", marginBottom: 4 }}>OR ENTER IMAGE URL</label>
+                <input 
+                  className="auth-input" 
+                  value={imagePreview} 
+                  onChange={(e) => setImagePreview(e.target.value)}
+                  placeholder="https://images.unsplash.com/..." 
+                />
+              </div>
+            </div>
+          </div>
         </div>
+
         <div className="auth-field">
           <label className="auth-label">Tag Label</label>
           <input name="tag" className="auth-input" defaultValue={initialData?.tag} placeholder="e.g. SOLD OUT" />
@@ -93,9 +283,9 @@ export default function EventForm({
         <textarea name="description" className="auth-input" defaultValue={initialData?.description} required rows={4} style={{ padding: 16, resize: "vertical" }} placeholder="Describe the event..." />
       </div>
 
-      <div style={{ marginTop: 24, padding: 24, background: "rgba(255,255,255,0.02)", borderRadius: 16, border: "1px solid rgba(255,255,255,0.04)" }}>
-        <h4 style={{ marginBottom: 16, fontSize: "0.9rem", color: "var(--text-faint)" }}>Advanced Data (JSON Format)</h4>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16 }}>
+      <div style={{ marginTop: 32, padding: 24, background: "rgba(255,255,255,0.02)", borderRadius: 20, border: "1px solid rgba(255,255,255,0.04)" }}>
+        <h4 style={{ marginBottom: 16, fontSize: "0.9rem", color: "var(--text-faint)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Advanced Data (JSON Format)</h4>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 20 }}>
           <div className="auth-field">
             <label className="auth-label">Organizer Info</label>
             <textarea name="organizer" className="auth-input" rows={2} defaultValue={JSON.stringify(initialData?.organizer || { name: "EventPro Team", avatar: "https://i.pravatar.cc/150?u=admin", bio: "Official organizers" }, null, 2)} />
@@ -112,9 +302,9 @@ export default function EventForm({
       </div>
 
       <div style={{ marginTop: 40, display: "flex", gap: 16 }}>
-        <button type="submit" disabled={loading} className={`btn-primary auth-submit ${loading ? "auth-submit-loading" : ""}`} style={{ marginTop: 0, flex: 1 }}>
-          {loading && <span className="auth-spinner" />}
-          {loading ? "Saving..." : initialData ? "Update Event" : "Create Event"}
+        <button type="submit" disabled={loading || uploading} className={`btn-primary auth-submit ${loading ? "auth-submit-loading" : ""}`} style={{ marginTop: 0, flex: 1 }}>
+          {(loading || uploading) && <span className="auth-spinner" />}
+          {loading ? "Saving..." : uploading ? "Uploading..." : initialData ? "Update Event" : "Create Event"}
         </button>
         <button type="button" onClick={() => router.back()} className="btn-outline" style={{ flex: 1 }}>
           Cancel

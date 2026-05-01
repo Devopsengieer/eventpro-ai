@@ -15,6 +15,45 @@ export default function NewUserPage() {
     setError("");
 
     const formData = new FormData(e.currentTarget);
+    
+    // Client-side validation
+    const name = formData.get("name") as string;
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+    const role = formData.get("role") as string;
+
+    if (!name?.trim()) {
+      setError("Full name is required");
+      setLoading(false);
+      return;
+    }
+
+    if (!email?.trim()) {
+      setError("Email is required");
+      setLoading(false);
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError("Invalid email format");
+      setLoading(false);
+      return;
+    }
+
+    if (!password || password.length < 6) {
+      setError("Password must be at least 6 characters");
+      setLoading(false);
+      return;
+    }
+
+    if (!role) {
+      setError("Role is required");
+      setLoading(false);
+      return;
+    }
+
     const result = await createUser(formData);
 
     if (result.success) {
@@ -39,7 +78,7 @@ export default function NewUserPage() {
         display: "flex", flexDirection: "column", gap: 20 
       }}>
         {error && (
-          <div style={{ padding: 12, background: "rgba(244,63,94,0.1)", border: "1px solid rgba(244,63,94,0.3)", borderRadius: 12, color: "#f43f5e", fontSize: "0.9rem" }}>
+          <div className="auth-error">
             {error}
           </div>
         )}
@@ -61,7 +100,7 @@ export default function NewUserPage() {
 
         <div className="auth-field">
           <label className="auth-label">Role</label>
-          <select name="role" className="auth-input" defaultValue="USER" style={{ cursor: "pointer" }}>
+          <select name="role" className="auth-input" defaultValue="USER" style={{ cursor: "pointer" }} required>
             <option value="USER">USER — Standard user</option>
             <option value="ADMIN">ADMIN — Full admin access</option>
           </select>

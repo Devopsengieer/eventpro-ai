@@ -23,11 +23,10 @@ async function main() {
   });
   console.log("Created admin user: admin@eventpro.ai / adminpassword");
 
-  // Insert events
+  // Insert events without explicit IDs so Postgres autoincrement stays in sync.
   for (const event of EVENTS) {
     await prisma.event.create({
       data: {
-        id: event.id,
         title: event.title,
         category: event.category,
         date: event.date,
@@ -46,6 +45,9 @@ async function main() {
       },
     });
   }
+
+  // Ensure the PostgreSQL sequence is reset to the current max id after manual inserts.
+  await prisma.$executeRawUnsafe(`SELECT setval(pg_get_serial_sequence('"Event"','id'), COALESCE((SELECT MAX(id) FROM "Event"), 1), true);`);
 
   console.log(`Seeded ${EVENTS.length} events successfully!`);
 }

@@ -1,26 +1,40 @@
 import { getAdminUsers, updateUserRole, deleteUser } from "@/app/actions/admin";
 import Link from "next/link";
+import AdminPagination from "@/app/components/admin/AdminPagination";
 
-export default async function AdminUsersPage() {
-  const users = await getAdminUsers();
+export const dynamic = "force-dynamic";
+
+interface Props {
+  searchParams: Promise<{ page?: string }>;
+}
+
+export default async function AdminUsersPage({ searchParams }: Props) {
+  const params = await searchParams;
+  const page = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
+  const { users, total, totalPages, pageSize } = await getAdminUsers(page, 10);
 
   return (
     <div className="admin-users">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 40 }}>
         <div>
           <h1 className="section-title" style={{ marginBottom: 8 }}>User Directory</h1>
-          <p style={{ color: "var(--text-muted)" }}>Create, manage roles, and remove user accounts.</p>
+          <p style={{ color: "var(--text-muted)" }}>
+            Create, manage roles, and remove user accounts.
+            <span style={{ marginLeft: 8, fontSize: "0.85rem", color: "var(--text-faint)" }}>
+              ({total} total)
+            </span>
+          </p>
         </div>
         <Link href="/admin/users/new" className="btn-primary" style={{ textDecoration: "none" }}>
           + Create User
         </Link>
       </div>
 
-      <div style={{ 
-        background: "rgba(255,255,255,0.03)", 
-        border: "1px solid rgba(255,255,255,0.06)", 
-        borderRadius: 24, 
-        overflow: "hidden" 
+      <div style={{
+        background: "rgba(255,255,255,0.03)",
+        border: "1px solid rgba(255,255,255,0.06)",
+        borderRadius: 24,
+        overflow: "hidden"
       }}>
         <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
           <thead>
@@ -33,12 +47,18 @@ export default async function AdminUsersPage() {
             </tr>
           </thead>
           <tbody>
-            {users.map((u) => (
+            {users.length === 0 ? (
+              <tr>
+                <td colSpan={5} style={{ padding: "48px 24px", textAlign: "center", color: "var(--text-faint)" }}>
+                  No users found.
+                </td>
+              </tr>
+            ) : users.map((u) => (
               <tr key={u.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
                 <td style={{ padding: "20px 24px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <div style={{ 
-                      width: 36, height: 36, borderRadius: 10, 
+                    <div style={{
+                      width: 36, height: 36, borderRadius: 10,
                       background: "rgba(99,102,241,0.1)", color: "var(--accent-lighter)",
                       display: "flex", alignItems: "center", justifyContent: "center",
                       fontWeight: 700, fontSize: "0.8rem"
@@ -57,10 +77,10 @@ export default async function AdminUsersPage() {
                     const newRole = formData.get("role") as string;
                     await updateUserRole(u.id, newRole);
                   }} style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    <select 
-                      name="role" 
+                    <select
+                      name="role"
                       defaultValue={u.role}
-                      style={{ 
+                      style={{
                         padding: "6px 12px", borderRadius: 8, fontSize: "0.78rem", fontWeight: 600,
                         background: u.role === "ADMIN" ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.05)",
                         color: u.role === "ADMIN" ? "#fbbf24" : "var(--text-secondary)",
@@ -100,6 +120,8 @@ export default async function AdminUsersPage() {
             ))}
           </tbody>
         </table>
+
+        <AdminPagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} />
       </div>
     </div>
   );

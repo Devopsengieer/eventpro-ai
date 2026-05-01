@@ -7,7 +7,7 @@ import { NAV_LINKS } from "@/app/lib/data";
 import { logout } from "@/app/actions/auth";
 import { useRouter } from "next/navigation";
 
-export default function Navbar({ user }: { user: any }) {
+export default function Navbar({ user, wishlistCount = 0 }: { user: any, wishlistCount?: number }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -94,13 +94,22 @@ export default function Navbar({ user }: { user: any }) {
                   <div className="user-dropdown-name">{user.name}</div>
                   <div className="user-dropdown-email">{user.email}</div>
                 </div>
+                <Link href="/wishlist" className="user-dropdown-item">
+                  <span>❤️</span> Saved Events {wishlistCount > 0 ? `(${wishlistCount})` : ""}
+                </Link>
                 <Link href="/my-bookings" className="user-dropdown-item">
                   <span>🎟️</span> My Bookings
                 </Link>
                 {user.role === "ADMIN" && (
-                  <Link href="/admin" className="user-dropdown-item">
-                    <span>⚙️</span> Admin Dashboard
-                  </Link>
+                  pathname.startsWith("/admin") ? (
+                    <Link href="/" className="user-dropdown-item">
+                      <span>🌐</span> Website
+                    </Link>
+                  ) : (
+                    <Link href="/admin" className="user-dropdown-item">
+                      <span>⚙️</span> Admin Dashboard
+                    </Link>
+                  )
                 )}
                 <div className="user-dropdown-divider" />
                 <button 
@@ -168,7 +177,11 @@ export default function Navbar({ user }: { user: any }) {
               </div>
               <Link href="/my-bookings" className="nav-link ep-mobile-link">My Bookings</Link>
               {user.role === "ADMIN" && (
-                <Link href="/admin" className="nav-link ep-mobile-link">Admin Dashboard</Link>
+                pathname.startsWith("/admin") ? (
+                  <Link href="/" className="nav-link ep-mobile-link">🌐 Website</Link>
+                ) : (
+                  <Link href="/admin" className="nav-link ep-mobile-link">⚙️ Admin Dashboard</Link>
+                )
               )}
               <button 
                 onClick={handleLogout}

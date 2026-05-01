@@ -1,20 +1,34 @@
 import { getAdminBookings, adminCancelBooking } from "@/app/actions/admin";
+import AdminPagination from "@/app/components/admin/AdminPagination";
 
-export default async function AdminBookingsPage() {
-  const bookings = await getAdminBookings();
+export const dynamic = "force-dynamic";
+
+interface Props {
+  searchParams: Promise<{ page?: string }>;
+}
+
+export default async function AdminBookingsPage({ searchParams }: Props) {
+  const params = await searchParams;
+  const page = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
+  const { bookings, total, totalPages, pageSize } = await getAdminBookings(page, 10);
 
   return (
     <div className="admin-bookings">
       <div style={{ marginBottom: 40 }}>
         <h1 className="section-title" style={{ marginBottom: 8 }}>System Bookings</h1>
-        <p style={{ color: "var(--text-muted)" }}>View and manage all event transactions and registrations.</p>
+        <p style={{ color: "var(--text-muted)" }}>
+          View and manage all event transactions and registrations.
+          <span style={{ marginLeft: 8, fontSize: "0.85rem", color: "var(--text-faint)" }}>
+            ({total} total)
+          </span>
+        </p>
       </div>
 
-      <div style={{ 
-        background: "rgba(255,255,255,0.03)", 
-        border: "1px solid rgba(255,255,255,0.06)", 
-        borderRadius: 24, 
-        overflow: "hidden" 
+      <div style={{
+        background: "rgba(255,255,255,0.03)",
+        border: "1px solid rgba(255,255,255,0.06)",
+        borderRadius: 24,
+        overflow: "hidden"
       }}>
         <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
           <thead>
@@ -29,7 +43,13 @@ export default async function AdminBookingsPage() {
             </tr>
           </thead>
           <tbody>
-            {bookings.map((b) => (
+            {bookings.length === 0 ? (
+              <tr>
+                <td colSpan={7} style={{ padding: "48px 24px", textAlign: "center", color: "var(--text-faint)" }}>
+                  No bookings found.
+                </td>
+              </tr>
+            ) : bookings.map((b) => (
               <tr key={b.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
                 <td style={{ padding: "20px 24px" }}>
                   <div style={{ fontWeight: 600, fontSize: "0.95rem" }}>{b.user.name}</div>
@@ -46,8 +66,8 @@ export default async function AdminBookingsPage() {
                 </td>
                 <td style={{ padding: "20px 24px" }}>
                   <div>
-                    <span style={{ 
-                      padding: "4px 10px", borderRadius: 6, fontSize: "0.7rem", fontWeight: 700, 
+                    <span style={{
+                      padding: "4px 10px", borderRadius: 6, fontSize: "0.7rem", fontWeight: 700,
                       background: b.status === "CONFIRMED" ? "rgba(16,185,129,0.15)" : "rgba(244,63,94,0.15)",
                       color: b.status === "CONFIRMED" ? "#10b981" : "#f43f5e",
                       border: b.status === "CONFIRMED" ? "1px solid rgba(16,185,129,0.2)" : "1px solid rgba(244,63,94,0.2)"
@@ -70,8 +90,8 @@ export default async function AdminBookingsPage() {
                       "use server";
                       await adminCancelBooking(b.id);
                     }}>
-                      <button type="submit" style={{ 
-                        background: "rgba(244,63,94,0.1)", border: "1px solid rgba(244,63,94,0.2)", 
+                      <button type="submit" style={{
+                        background: "rgba(244,63,94,0.1)", border: "1px solid rgba(244,63,94,0.2)",
                         color: "#f43f5e", cursor: "pointer", fontSize: "0.78rem", padding: "6px 14px",
                         borderRadius: 8, fontFamily: "inherit", fontWeight: 600
                       }}>
@@ -86,6 +106,8 @@ export default async function AdminBookingsPage() {
             ))}
           </tbody>
         </table>
+
+        <AdminPagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} />
       </div>
     </div>
   );

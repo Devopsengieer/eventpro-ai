@@ -3,8 +3,9 @@ import { getEventById } from "@/app/actions/event";
 import EventForm from "@/app/components/admin/EventForm";
 import { notFound } from "next/navigation";
 
-export default async function EditEventPage({ params }: { params: { id: string } }) {
-  const eventId = parseInt(params.id);
+export default async function EditEventPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const eventId = parseInt(id);
   const event = await getEventById(eventId);
 
   if (!event) {

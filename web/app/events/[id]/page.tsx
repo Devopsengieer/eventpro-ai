@@ -5,6 +5,8 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
   formatAttendees,
+  formatDate,
+  formatTime,
 } from "@/app/lib/data";
 import EventCard from "@/app/components/EventCard";
 
@@ -18,6 +20,8 @@ export default function EventDetailPage() {
   const [savedIds, setSavedIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
+    if (!eventId || isNaN(eventId)) return;
+
     import("@/app/actions/event").then(async (m) => {
       const data = await m.getEventById(eventId);
       setEvent(data);
@@ -225,7 +229,7 @@ export default function EventDetailPage() {
               }}
             >
               {[
-                { icon: "📅", text: `${event.date} · ${event.time}` },
+                { icon: "📅", text: `${formatDate(event.date)} · ${formatTime(event.time)}` },
                 { icon: "📍", text: event.location },
                 {
                   icon: "👥",
@@ -570,7 +574,7 @@ export default function EventDetailPage() {
                   fontWeight: 500,
                 }}
               >
-                📅 {event.date}
+                📅 {formatDate(event.date)}
               </div>
               <div
                 style={{
@@ -579,7 +583,7 @@ export default function EventDetailPage() {
                   marginTop: 4,
                 }}
               >
-                ⏰ {event.time}
+                ⏰ {formatTime(event.time)}
               </div>
             </div>
 

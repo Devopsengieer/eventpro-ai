@@ -4,10 +4,11 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  CATEGORIES,
   WHY_CHOOSE,
 } from "@/app/lib/data";
 import EventCard from "@/app/components/EventCard";
+import DynamicIcon from "@/app/components/DynamicIcon";
+import { getCategories } from "@/app/actions/admin";
 
 export default function HomePage() {
   const router = useRouter();
@@ -17,11 +18,18 @@ export default function HomePage() {
   const [savedIds, setSavedIds] = useState<Set<number>>(new Set());
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [featuredEvents, setFeaturedEvents] = useState<any[]>([]);
+  const [dbCategories, setDbCategories] = useState<any[]>([]);
 
   useEffect(() => {
     import("@/app/actions/event").then((m) => {
       m.getFeaturedEventsFromDB().then((data: any[]) => setFeaturedEvents(data));
     });
+    import("@/app/actions/wishlist").then((m) => {
+      m.getWishlistItems().then((items) => {
+        setSavedIds(new Set(items.map((i: any) => i.eventId)));
+      });
+    });
+    getCategories().then(setDbCategories);
   }, []);
 
   const toggleSave = (id: number) => {
@@ -29,6 +37,9 @@ export default function HomePage() {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
+    });
+    import("@/app/actions/wishlist").then((m) => {
+      m.toggleWishlistItem(id);
     });
   };
 
@@ -191,23 +202,9 @@ export default function HomePage() {
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
           >
-            {[
-              "All Categories",
-              "Technology",
-              "Music",
-              "Business",
-              "Sports",
-              "Art & Design",
-              "Food & Drink",
-              "Health",
-              "Education",
-              "Theatre",
-              "Comedy",
-              "Film & Cinema",
-              "Fitness & Wellness",
-              "Gaming & Esports",
-            ].map((c) => (
-              <option key={c}>{c}</option>
+            <option>All Categories</option>
+            {dbCategories.map((c) => (
+              <option key={c.name} value={c.name}>{c.name}</option>
             ))}
           </select>
           <button className="btn-primary" onClick={handleSearch}>
@@ -343,7 +340,7 @@ export default function HomePage() {
               gap: "16px",
             }}
           >
-            {CATEGORIES.map((cat) => (
+            {dbCategories.map((cat) => (
               <Link
                 key={cat.name}
                 href={`/events?category=${encodeURIComponent(cat.name)}`}
@@ -359,11 +356,11 @@ export default function HomePage() {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontSize: "1.5rem",
+                    color: cat.accent,
                     margin: "0 auto 14px",
                   }}
                 >
-                  {cat.icon}
+                  <DynamicIcon name={cat.icon} size={24} />
                 </div>
                 <div
                   style={{
@@ -374,9 +371,6 @@ export default function HomePage() {
                   }}
                 >
                   {cat.name}
-                </div>
-                <div style={{ fontSize: "0.78rem", color: "var(--text-faint)" }}>
-                  {cat.count} events
                 </div>
               </Link>
             ))}

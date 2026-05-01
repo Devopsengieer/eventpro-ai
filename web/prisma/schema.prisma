@@ -8,36 +8,38 @@ datasource db {
 }
 
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
+  id           String         @id @default(cuid())
+  email        String         @unique
   passwordHash String
   name         String?
-  role         Role      @default(USER)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  role         Role           @default(USER)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
   bookings     Booking[]
+  wishlistItems WishlistItem[]
 }
 
 model Event {
-  id          Int       @id @default(autoincrement())
+  id          Int            @id @default(autoincrement())
   title       String
   category    String
   date        String
   time        String
   location    String
   price       Float
-  attendees   Int       @default(0)
+  attendees   Int            @default(0)
   image       String
   tag         String
   tagColor    String
-  featured    Boolean   @default(false)
+  featured    Boolean        @default(false)
   description String
   organizer   Json      // { name, avatar, bio }
   schedule    Json      // [{ time, title, speaker? }]
   highlights  Json      // string[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
   bookings    Booking[]
+  wishlistItems WishlistItem[]
 }
 
 model Booking {
@@ -53,6 +55,27 @@ model Booking {
   
   user        User      @relation(fields: [userId], references: [id])
   event       Event     @relation(fields: [eventId], references: [id])
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  eventId   Int
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  event     Event    @relation(fields: [eventId], references: [id])
+
+  @@unique([userId, eventId])
+}
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  icon      String   @default("📌")
+  accent    String   @default("#6366f1")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum Role {

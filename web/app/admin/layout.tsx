@@ -31,6 +31,7 @@ export default async function AdminLayout({
           </h2>
           <nav style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <AdminNavLink href="/admin" icon="📊" label="Dashboard" />
+            <AdminNavLink href="/admin/categories" icon="🏷️" label="Categories" />
             <AdminNavLink href="/admin/events" icon="📅" label="Manage Events" />
             <AdminNavLink href="/admin/users" icon="👥" label="User Directory" />
             <AdminNavLink href="/admin/bookings" icon="🎟️" label="All Bookings" />
@@ -44,7 +45,7 @@ export default async function AdminLayout({
       </aside>
 
       {/* Admin Content */}
-      <main style={{ flex: 1, padding: "40px", overflowY: "auto" }}>
+      <main style={{ flex: 1, padding: "40px", overflowY: "auto", scrollBehavior: "smooth" }}>
         {children}
       </main>
 
